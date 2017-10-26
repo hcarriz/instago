@@ -55,11 +55,11 @@ type media struct {
 
 func main() {
 
-	flag.StringVar(&user, "user", "", "user to scrape (Required)")
-	flag.StringVar(&dir, "dir", "", "where to save the scraped media files (Required)")
-	flag.BoolVar(&pics, "pics", false, "only download images")
-	flag.BoolVar(&vids, "vids", false, "only download videos")
-	flag.BoolVar(&skip, "overwrite", false, "will overwite previous downloaded images or videos")
+	flag.StringVar(&user, "user", "", "user to scrape (required)")
+	flag.StringVar(&dir, "dir", "", "where to save the scraped media files (required)")
+	flag.BoolVar(&pics, "pics", false, "only download images (optional)")
+	flag.BoolVar(&vids, "vids", false, "only download videos (optional)")
+	flag.BoolVar(&skip, "overwrite", false, "will overwrite previous downloaded images or videos (optional)")
 
 	flag.Parse()
 
@@ -69,8 +69,8 @@ func main() {
 	}
 
 	if pics == true && vids == true {
-		log.Println("use either -pics or -vids, not both")
-		os.Exit(1)
+		pics = false
+		vids = false
 	}
 
 	if c := checkDir(dir); !c {
@@ -109,10 +109,10 @@ func parse(u string) {
 
 	for _, post := range j.Items {
 
-		multi := post.CarouselMedia
+		carousel := post.CarouselMedia
 
-		if len(multi) > 0 {
-			for _, seat := range multi {
+		if len(carousel) > 0 {
+			for _, seat := range carousel {
 
 				m := media{
 					Video: seat.Videos.StandardResolution.URL,

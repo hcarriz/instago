@@ -7,22 +7,22 @@ Scrape an Instagram user with Go. Get the latest release [here](https://github.c
 Default usage:
 
 ``` bash
-instago -user \<user> -dir \<save_directory>
+instago -user <user> -dir <save_directory>
 ```
 
 Only download images:
 
 ``` bash
-instago -user \<user> -dir \<save_directory> -pics
+instago -user <user> -dir <save_directory> -pics
 ```
 
-Only download images:
+Only download videos:
 
 ``` bash
-instago -user \<user> -dir \<save_directory> -vids
+instago -user <user> -dir <save_directory> -vids
 ```
 
-Using `-pics` and `-vids` together download
+Using `-pics` and `-vids` together will download images and videos together.
 
 
 ## To Do

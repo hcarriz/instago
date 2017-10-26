@@ -1,4 +1,6 @@
 # instago
+[![Go Report Card](https://goreportcard.com/badge/github.com/pagumin/instago)](https://goreportcard.com/report/github.com/pagumin/instago)
+[![GitHub release](https://img.shields.io/github/release/qubyte/rubidium.svg)](https://github.com/pagumin/instago/releases)
 
 Scrape an Instagram user with Go. Get the latest release [here](https://github.com/pagumin/instago/releases).
 

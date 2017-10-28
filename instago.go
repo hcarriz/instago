@@ -8,15 +8,18 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 var (
-	dir  string
-	pics bool
-	skip bool
-	user string
-	vids bool
+	dir        string
+	pics       bool
+	skip       bool
+	user       string
+	vids       bool
+	maxdaysold int
 )
 
 type instagram struct {
@@ -27,6 +30,7 @@ type instagram struct {
 				URL string `json:"url"`
 			} `json:"standard_resolution"`
 		} `json:"images"`
+		CreatedTime   string `json:"created_time"`
 		CarouselMedia []struct {
 			Images struct {
 				StandardResolution struct {
@@ -57,6 +61,7 @@ func main() {
 
 	flag.StringVar(&user, "user", "", "user to scrape (required)")
 	flag.StringVar(&dir, "dir", "", "where to save the scraped media files (required)")
+	flag.IntVar(&maxdaysold, "maxdaysold", 0, "only scrape media within past x days. F.e. use '5' to download content from the past 5 days")
 	flag.BoolVar(&pics, "pics", false, "only download images (optional)")
 	flag.BoolVar(&vids, "vids", false, "only download videos (optional)")
 	flag.BoolVar(&skip, "overwrite", false, "will overwrite previous downloaded images or videos (optional)")
@@ -108,6 +113,18 @@ func parse(u string) {
 	}
 
 	for _, post := range j.Items {
+
+		if maxdaysold != 0 {
+			daysAgo, err := daysAgo(post.CreatedTime)
+			if err != nil {
+				log.Println(err)
+			}
+
+			if daysAgo > maxdaysold {
+				log.Printf("skipping post form %d days ago (%s)", daysAgo, post.Images.StandardResolution.URL)
+				break
+			}
+		}
 
 		carousel := post.CarouselMedia
 
@@ -223,4 +240,17 @@ func checkDir(d string) (forward bool) {
 
 	return true
 
+}
+
+func daysAgo(unixTimestamp string) (int, error) {
+	i, err := strconv.ParseInt(unixTimestamp, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	then := time.Unix(i, 0)
+	now := time.Now()
+	diff := now.Sub(then)
+	days := int(diff.Hours() / 24)
+	return days, nil
 }

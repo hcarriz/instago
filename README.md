@@ -24,6 +24,12 @@ Only download videos:
 instago -user <user> -dir <save_directory> -vids
 ```
 
+Download content from past 5 days:
+
+``` bash
+instago -user <user> -dir <save_directory> -maxdaysold 5
+```
+
 Using `-pics` and `-vids` together will download images and videos together.
 
 

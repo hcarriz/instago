@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
 
 	"github.com/araddon/dateparse"
+	"github.com/pagumin/instago/pkg/instago"
 	"github.com/pagumin/instago/pkg/utilities"
 )
 
@@ -92,8 +94,29 @@ func main() {
 
 	// GET THE POSTS
 
+	log.Printf("searching for %s", user)
+
+	data := make(chan instago.Instagram)
+	err := make(chan error)
+	go instago.Retrieve(user, data, err)
+
+	for i := 0; i < 1; i++ {
+
+		select {
+		case e := <-err:
+			fmt.Println(e)
+		case d := <-data:
+			for _, post := range d.Items {
+				log.Println(post.ID)
+			}
+		}
+
+	}
+
 	// FILTER THE POSTS
 
 	// DOWNLOAD THE FILTERED POSTS
+
+	return
 
 }

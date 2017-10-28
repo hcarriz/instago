@@ -25,6 +25,7 @@ var (
 	singles    bool
 	beforeDate time.Time
 	afterDate  time.Time
+	max        int
 )
 
 func main() {
@@ -39,6 +40,7 @@ func main() {
 	flag.StringVar(&zone, "timezone", "UTC", "Timezone aka `America/Los_Angeles` formatted time-zone (optional)")
 	flag.BoolVar(&carousels, "carousel", false, "only download media from carousel posts (optional)")
 	flag.BoolVar(&singles, "single", false, "only download media from single posts (optional)")
+	flag.IntVar(&max, "max", 0, "the maximum amount of valid/filtered posts to download (0 means all valid posts)")
 
 	flag.Parse()
 
@@ -92,23 +94,59 @@ func main() {
 
 	}
 
-	// GET THE POSTS
+	// Provide feedback that the search has started.
+	fmt.Printf("searching for %s\n", user)
 
-	log.Printf("searching for %s", user)
-
+	// Get the posts.
 	data := make(chan instago.Instagram)
 	err := make(chan error)
-	go instago.Retrieve(user, data, err)
+	stop := make(chan bool)
+	go instago.Retrieve(user, "", data, err)
 
-	for i := 0; i < 1; i++ {
+	// Filter the posts
+
+	filter := instago.Filters{
+		Before:       beforeDate,
+		After:        afterDate,
+		CarouselOnly: carousels,
+		SingleOnly:   singles,
+		Videos:       vids,
+		Pictures:     pics,
+		Amount:       max,
+	}
+	x := 1
+
+	// var posts []instago.Post
+
+	for i := 0; i < x; i++ {
 
 		select {
 		case e := <-err:
 			fmt.Println(e)
 		case d := <-data:
+
 			for _, post := range d.Items {
-				log.Println(post.ID)
+
+				skip, stop := post.Filter(filter)
+
+				switch {
+				case stop:
+					break
+				case skip:
+					return
+				default:
+					post.Save(filter)
+				}
+
 			}
+
+			if d.MoreAvailable {
+				x++
+			}
+
+		case <-stop:
+			break
+
 		}
 
 	}

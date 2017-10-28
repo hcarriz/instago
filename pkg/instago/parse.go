@@ -1,62 +1,56 @@
 package instago
 
-func (i Instagram) parse() (posts []post) {
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
 
-	for _, single := range i.Items {
-
-		temp := post{
-			ID:       single.ID,
-			Created:  single.CreatedTime,
-			Caption:  single.Caption.Text,
-			Likes:    single.Likes.Count,
-			Comments: single.Comments.Count,
-			Location: single.Location.Name,
-		}
-
-		carousel := single.CarouselMedia
-
-		if len(carousel) > 0 {
-
-			for _, seat := range carousel {
-
-				t := solve(seat.Images.StandardResolution.URL, seat.Videos.StandardResolution.URL)
-				temp.Media = append(temp.Media, t)
-
-			}
-
-		} else {
-
-			t := solve(single.Images.StandardResolution.URL, single.Videos.StandardResolution.URL)
-			temp.Media = append(temp.Media, t)
-
-		}
-
-		posts = append(posts, temp)
-
-	}
-
-	return
-
+// Filters is used in a channel to relay information if a post is or isn't wanted by the user.
+type Filters struct {
+	Before       time.Time
+	After        time.Time
+	CarouselOnly bool
+	SingleOnly   bool
+	Videos       bool
+	Pictures     bool
+	Amount       int
 }
 
-func solve(picture, video string) postmedia {
+// Filter check if post passes the filter and returns a bool on whether to skip or stop.
+func (post Post) Filter(filter Filters) (skip bool, stop bool) {
 
-	var url string
-	var vid bool
+	// TIME FILTER
 
-	switch {
-	case video != "":
-		url = video
-		vid = true
-	default:
-		url = picture
+	var empty time.Time
+
+	t, err := strconv.ParseInt(post.CreatedTime, 10, 64)
+	if err != nil {
+		panic(err)
 	}
 
-	t := postmedia{
-		URL:   url,
-		Video: vid,
+	created := time.Unix(t, 0)
+
+	// Post was created before a date filter. Skipping post.
+	if filter.After != empty && created.Before(filter.After) {
+		skip = true
+		return
 	}
 
-	return t
+	// Post was created after date. Stopping the loop.
+	if filter.Before != empty && created.After(filter.Before) {
+		stop = true
+		return
+	}
+
+	// FORMAT FILTER
+
+	return
+}
+
+// Save will
+func (post Post) Save(filter Filters) {
+
+	fmt.Printf("post %s passed filters. saving....\n", post.ID)
 
 }

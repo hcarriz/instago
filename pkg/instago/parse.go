@@ -1,27 +1,17 @@
 package instago
 
 import (
-	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
-
-// Filters is used in a channel to relay information if a post is or isn't wanted by the user.
-type Filters struct {
-	Before       time.Time
-	After        time.Time
-	CarouselOnly bool
-	SingleOnly   bool
-	Videos       bool
-	Pictures     bool
-	Amount       int
-}
 
 // Filter check if post passes the filter and returns a bool on whether to skip or stop.
 func (post Post) Filter(filter Filters) (skip bool, stop bool) {
 
 	// TIME FILTER
 
+	// Parse the time that the Instgram post was created.
 	var empty time.Time
 
 	t, err := strconv.ParseInt(post.CreatedTime, 10, 64)
@@ -45,12 +35,11 @@ func (post Post) Filter(filter Filters) (skip bool, stop bool) {
 
 	// FORMAT FILTER
 
+	// TEXT FILTER
+	if filter.Has != "" && !strings.Contains(post.Caption.Text, filter.Has) {
+		skip = true
+		return
+	}
+
 	return
-}
-
-// Save will
-func (post Post) Save(filter Filters) {
-
-	fmt.Printf("post %s passed filters. saving....\n", post.ID)
-
 }

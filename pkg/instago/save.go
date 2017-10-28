@@ -1,5 +1,14 @@
 package instago
 
+import "log"
+
+// Save will
+func (post Post) Save(filter Filters) {
+
+	log.Printf("http://instagram.com/p/%s passed filters. saving....\n", post.Code)
+
+}
+
 // func (m media) save() error {
 
 // 	url := m.Video

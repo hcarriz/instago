@@ -1,5 +1,7 @@
 package instago
 
+import "time"
+
 // Instagram is JSON that Instagram uses.
 type Instagram struct {
 	MoreAvailable bool   `json:"more_available"`
@@ -140,17 +142,14 @@ type Post struct {
 	VideoViews int `json:"video_views,omitempty"`
 }
 
-type post struct {
-	ID       string
-	Created  string
-	Caption  string
-	Likes    int
-	Comments int
-	Location string
-	Media    []postmedia
-}
-
-type postmedia struct {
-	URL   string
-	Video bool
+// Filters is used in a channel to relay information if a post is or isn't wanted by the user.
+type Filters struct {
+	Before       time.Time
+	After        time.Time
+	CarouselOnly bool
+	SingleOnly   bool
+	Videos       bool
+	Pictures     bool
+	Amount       int
+	Has          string
 }

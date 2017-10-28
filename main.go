@@ -15,17 +15,18 @@ import (
 // Flags
 var (
 	after      string
+	afterDate  time.Time
 	before     string
+	beforeDate time.Time
+	carousels  bool
 	dir        string
+	has        string
+	max        int
 	pics       bool
+	singles    bool
 	user       string
 	vids       bool
 	zone       string
-	carousels  bool
-	singles    bool
-	beforeDate time.Time
-	afterDate  time.Time
-	max        int
 )
 
 func main() {
@@ -41,6 +42,7 @@ func main() {
 	flag.BoolVar(&carousels, "carousel", false, "only download media from carousel posts (optional)")
 	flag.BoolVar(&singles, "single", false, "only download media from single posts (optional)")
 	flag.IntVar(&max, "max", 0, "the maximum amount of valid/filtered posts to download (0 means all valid posts)")
+	flag.StringVar(&has, "has", "", "download a post if it has certain text (optional)")
 
 	flag.Parse()
 
@@ -113,10 +115,9 @@ func main() {
 		Videos:       vids,
 		Pictures:     pics,
 		Amount:       max,
+		Has:          has,
 	}
 	x := 1
-
-	// var posts []instago.Post
 
 	for i := 0; i < x; i++ {
 
@@ -150,10 +151,6 @@ func main() {
 		}
 
 	}
-
-	// FILTER THE POSTS
-
-	// DOWNLOAD THE FILTERED POSTS
 
 	return
 

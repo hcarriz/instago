@@ -1,226 +1,99 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
-	"io"
 	"log"
-	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
+	"time"
+
+	"github.com/araddon/dateparse"
+	"github.com/pagumin/instago/pkg/utilities"
 )
 
+// Flags
 var (
-	dir  string
-	pics bool
-	skip bool
-	user string
-	vids bool
+	after      string
+	before     string
+	dir        string
+	pics       bool
+	user       string
+	vids       bool
+	zone       string
+	carousels  bool
+	singles    bool
+	beforeDate time.Time
+	afterDate  time.Time
 )
-
-type instagram struct {
-	Items []struct {
-		ID     string `json:"id"`
-		Images struct {
-			StandardResolution struct {
-				URL string `json:"url"`
-			} `json:"standard_resolution"`
-		} `json:"images"`
-		CarouselMedia []struct {
-			Images struct {
-				StandardResolution struct {
-					URL string `json:"url"`
-				} `json:"standard_resolution"`
-			} `json:"images"`
-			Videos struct {
-				StandardResolution struct {
-					URL string `json:"url"`
-				} `json:"standard_resolution"`
-			} `json:"videos,omitempty"`
-		} `json:"carousel_media,omitempty"`
-		Videos struct {
-			StandardResolution struct {
-				URL string `json:"url"`
-			} `json:"standard_resolution"`
-		} `json:"videos,omitempty"`
-	} `json:"items"`
-	MoreAvailable bool `json:"more_available"`
-}
-
-type media struct {
-	Image string
-	Video string
-}
 
 func main() {
 
+	// Initialize the flags
 	flag.StringVar(&user, "user", "", "user to scrape (required)")
-	flag.StringVar(&dir, "dir", "", "where to save the scraped media files (required)")
+	flag.StringVar(&dir, "dir", "~/", "where to save the scraped media files (required)")
 	flag.BoolVar(&pics, "pics", false, "only download images (optional)")
 	flag.BoolVar(&vids, "vids", false, "only download videos (optional)")
-	flag.BoolVar(&skip, "overwrite", false, "will overwrite previous downloaded images or videos (optional)")
+	flag.StringVar(&before, "before", "", "get posts before date (optional)")
+	flag.StringVar(&after, "after", "", "get posts after a date (optional)")
+	flag.StringVar(&zone, "timezone", "UTC", "Timezone aka `America/Los_Angeles` formatted time-zone (optional)")
+	flag.BoolVar(&carousels, "carousel", false, "only download media from carousel posts (optional)")
+	flag.BoolVar(&singles, "single", false, "only download media from single posts (optional)")
 
 	flag.Parse()
 
+	// Always require the user to search and the directory to download to.
 	if user == "" || dir == "" {
+
 		flag.PrintDefaults()
-		os.Exit(1)
+		os.Exit(2)
+
 	}
 
+	// Check the directory
+	if c := utilities.ValidDir(dir); !c {
+		log.Fatal("need a valid directory with write access to download to")
+	}
+
+	// Fix the timezone
+	if zone != "" {
+
+		loc, err := time.LoadLocation(zone)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		time.Local = loc
+
+	}
+
+	// Dates
+	if b, err := dateparse.ParseLocal(before); err == nil {
+		beforeDate = b
+	}
+
+	if a, err := dateparse.ParseLocal(after); err == nil {
+		afterDate = a
+	}
+
+	// Allow for both commands to be used at the same time.
 	if pics == true && vids == true {
+
 		pics = false
 		vids = false
-	}
-
-	if c := checkDir(dir); !c {
-		return
-	}
-
-	u := "https://www.instagram.com/" + user + "/media/"
-	log.Printf("searching for %s....\n", user)
-
-	parse(u)
-	log.Printf("finished. exiting....")
-	os.Exit(1)
-
-}
-
-func parse(u string) {
-
-	res, err := http.Get(u)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	var j instagram
-	if err := json.NewDecoder(res.Body).Decode(&j); err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	res.Body.Close()
-
-	if len(j.Items) < 1 {
-		log.Println("user is private or does not exist.")
-		return
-	}
-
-	for _, post := range j.Items {
-
-		carousel := post.CarouselMedia
-
-		if len(carousel) > 0 {
-			for _, seat := range carousel {
-
-				m := media{
-					Video: seat.Videos.StandardResolution.URL,
-					Image: seat.Images.StandardResolution.URL,
-				}
-
-				if err := m.save(); err != nil {
-					log.Println(err)
-					break
-				}
-
-			}
-		}
-
-		m := media{
-			Video: post.Videos.StandardResolution.URL,
-			Image: post.Images.StandardResolution.URL,
-		}
-
-		if err := m.save(); err != nil {
-			log.Println(err)
-			break
-		}
 
 	}
 
-	if j.MoreAvailable {
-		id := j.Items[len(j.Items)-1].ID
-		u := "https://www.instagram.com/" + user + "/media/?max_id=" + id
-		parse(u)
+	// If both commands are used together, they won't cancel each other out.
+	if carousels == true && singles == true {
+
+		carousels = false
+		singles = false
+
 	}
 
-}
+	// GET THE POSTS
 
-func (m media) save() error {
+	// FILTER THE POSTS
 
-	url := m.Video
-
-	if url == "" && vids {
-		return nil
-	}
-
-	if url == "" || pics {
-		url = m.Image
-		url = strings.Replace(url, "s640x640", "s1080x1080", -1)
-	}
-
-	d := filepath.Join(dir, user)
-
-	if _, err := os.Stat(d); os.IsNotExist(err) {
-		if err := os.Mkdir(d, 0755); err != nil {
-			log.Fatal(err)
-			return err
-		}
-	}
-
-	_, name := filepath.Split(url)
-	newPath := filepath.Join(d, name)
-
-	if _, err := os.Stat(newPath); !os.IsNotExist(err) && !skip {
-		log.Printf("%s has already been saved. skipping....\n", name)
-		return nil
-	}
-
-	res, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	file, err := os.Create(newPath)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	defer file.Close()
-
-	if _, err := io.Copy(file, res.Body); err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	log.Printf("successfully downloaded %s\n", name)
-	return nil
-
-}
-
-func checkDir(d string) (forward bool) {
-
-	if _, err := os.Stat(d); os.IsNotExist(err) {
-		log.Println("directory does not exist")
-		return
-	}
-
-	new := filepath.Join(d, "tempDir")
-
-	if err := os.Mkdir(new, 0755); err != nil {
-		log.Println("unable to create directory")
-		return
-	}
-
-	if err := os.Remove(new); err != nil {
-		log.Println("unable to remove directory")
-		return
-	}
-
-	return true
+	// DOWNLOAD THE FILTERED POSTS
 
 }

@@ -124,7 +124,7 @@ type Filters struct {
 	CarouselOnly bool
 	SingleOnly   bool
 	Videos       bool
-	Pictures     bool
+	Images       bool
 	Amount       int
 	Has          string
 }

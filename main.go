@@ -21,12 +21,12 @@ var (
 	carousels  bool
 	dir        string
 	has        string
-	max        int
 	pics       bool
 	singles    bool
 	user       string
 	vids       bool
 	zone       string
+	// max        int
 )
 
 func main() {
@@ -41,7 +41,7 @@ func main() {
 	flag.StringVar(&zone, "timezone", "UTC", "Timezone aka `America/Los_Angeles` formatted time-zone (optional)")
 	flag.BoolVar(&carousels, "carousel", false, "only download media from carousel posts (optional)")
 	flag.BoolVar(&singles, "single", false, "only download media from single posts (optional)")
-	flag.IntVar(&max, "max", 0, "the maximum amount of valid/filtered posts to download (0 means all valid posts)")
+	// flag.IntVar(&max, "max", 0, "the maximum amount of valid/filtered posts to download (0 means all valid posts)")
 	flag.StringVar(&has, "has", "", "download a post if it has certain text (optional)")
 
 	flag.Parse()
@@ -113,8 +113,7 @@ func main() {
 		CarouselOnly: carousels,
 		SingleOnly:   singles,
 		Videos:       vids,
-		Pictures:     pics,
-		Amount:       max,
+		Images:       pics,
 		Has:          has,
 	}
 	x := 1

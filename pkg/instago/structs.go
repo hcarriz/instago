@@ -19,23 +19,7 @@ type Post struct {
 		ProfilePicture string `json:"profile_picture"`
 		Username       string `json:"username"`
 	} `json:"user"`
-	Images struct {
-		Thumbnail struct {
-			Width  int    `json:"width"`
-			Height int    `json:"height"`
-			URL    string `json:"url"`
-		} `json:"thumbnail"`
-		LowResolution struct {
-			Width  int    `json:"width"`
-			Height int    `json:"height"`
-			URL    string `json:"url"`
-		} `json:"low_resolution"`
-		StandardResolution struct {
-			Width  int    `json:"width"`
-			Height int    `json:"height"`
-			URL    string `json:"url"`
-		} `json:"standard_resolution"`
-	} `json:"images"`
+	Media
 	CreatedTime string `json:"created_time"`
 	Caption     struct {
 		ID          string `json:"id"`
@@ -79,67 +63,58 @@ type Post struct {
 		Name string `json:"name"`
 	} `json:"location"`
 	CarouselMedia []struct {
-		Videos struct {
-			StandardResolution struct {
-				Width  int    `json:"width"`
-				Height int    `json:"height"`
-				URL    string `json:"url"`
-				ID     string `json:"id"`
-			} `json:"standard_resolution"`
-			LowBandwidth struct {
-				Width  int    `json:"width"`
-				Height int    `json:"height"`
-				URL    string `json:"url"`
-				ID     string `json:"id"`
-			} `json:"low_bandwidth"`
-			LowResolution struct {
-				Width  int    `json:"width"`
-				Height int    `json:"height"`
-				URL    string `json:"url"`
-				ID     string `json:"id"`
-			} `json:"low_resolution"`
-		} `json:"videos,omitempty"`
-		Images struct {
-			Thumbnail struct {
-				Width  int    `json:"width"`
-				Height int    `json:"height"`
-				URL    string `json:"url"`
-			} `json:"thumbnail"`
-			LowResolution struct {
-				Width  int    `json:"width"`
-				Height int    `json:"height"`
-				URL    string `json:"url"`
-			} `json:"low_resolution"`
-			StandardResolution struct {
-				Width  int    `json:"width"`
-				Height int    `json:"height"`
-				URL    string `json:"url"`
-			} `json:"standard_resolution"`
-		} `json:"images"`
+		Media
 		UsersInPhoto []interface{} `json:"users_in_photo"`
 		Type         string        `json:"type"`
 	} `json:"carousel_media,omitempty"`
-	Videos struct {
-		StandardResolution struct {
-			Width  int    `json:"width"`
-			Height int    `json:"height"`
-			URL    string `json:"url"`
-			ID     string `json:"id"`
-		} `json:"standard_resolution"`
-		LowBandwidth struct {
-			Width  int    `json:"width"`
-			Height int    `json:"height"`
-			URL    string `json:"url"`
-			ID     string `json:"id"`
-		} `json:"low_bandwidth"`
-		LowResolution struct {
-			Width  int    `json:"width"`
-			Height int    `json:"height"`
-			URL    string `json:"url"`
-			ID     string `json:"id"`
-		} `json:"low_resolution"`
-	} `json:"videos,omitempty"`
 	VideoViews int `json:"video_views,omitempty"`
+}
+
+// Media combines Images and Videos
+type Media struct {
+	Images Images `json:"images"`
+	Videos Videos `json:"videos,omitempty"`
+}
+
+// Images has the media information about a picture
+type Images struct {
+	Thumbnail struct {
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+	} `json:"thumbnail"`
+	LowResolution struct {
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+	} `json:"low_resolution"`
+	StandardResolution struct {
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+	} `json:"standard_resolution"`
+}
+
+// Videos has the information about a video.
+type Videos struct {
+	StandardResolution struct {
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+		ID     string `json:"id"`
+	} `json:"standard_resolution"`
+	LowBandwidth struct {
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+		ID     string `json:"id"`
+	} `json:"low_bandwidth"`
+	LowResolution struct {
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+		ID     string `json:"id"`
+	} `json:"low_resolution"`
 }
 
 // Filters is used in a channel to relay information if a post is or isn't wanted by the user.

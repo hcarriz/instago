@@ -1,108 +1,130 @@
 package instago
 
-import "log"
+import (
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 // Save will
 func (post Post) Save(filter Filters) {
 
-	log.Printf("http://instagram.com/p/%s passed filters. saving....\n", post.Code)
+	// Slice to hold valid url(s)
+	var urls []string
 
-	if !filter.CarouselOnly {
-		files := post.Media
-		urls := files.urls(filter)
+	// Notify the user that a file is being saved.
+	log.Printf("%s passed filters. saving....\n", post.Code)
 
-		for get, url := range urls {
-			if get {
-				if err := download(url); err != nil {
-					log.Fatal(err)
-				}
+	// Easily readable way to determine if a post has multiple media.
+	m := len(post.CarouselMedia)
+
+	var multi bool
+
+	if m > 1 {
+		multi = true
+	}
+
+	// Find the valid media
+	if multi {
+
+		// If the post has multiple media.
+		for _, p := range post.CarouselMedia {
+			if url, valid := p.url(filter); valid {
+				urls = append(urls, url)
 			}
+		}
+
+	} else {
+
+		// If the post has only one media item.
+		if url, valid := post.url(filter); valid {
+			urls = append(urls, url)
 		}
 
 	}
 
-	if !filter.SingleOnly {
-		files := post.CarouselMedia
+	// Save the valid urls.
+	for x := range urls {
 
-		for _, f := range files {
-			file := f.urls(filter)
-
-			for get, url := range file {
-				if get {
-					if err := download(url); err != nil {
-						log.Fatal(err)
-					}
-				}
-			}
-
+		err := make(chan error)
+		go post.download(urls[x], filter, err)
+		if e := <-err; e != nil {
+			log.Fatal(e)
 		}
+
 	}
 
 }
 
-func (media Media) urls(filter Filters) map[bool]string {
+// Get the right url based on the filter.
+func (m Media) url(filter Filters) (url string, valid bool) {
 
-	log.Println(media.Images.StandardResolution.URL)
+	video := m.Videos.StandardResolution.URL
+	photo := m.Images.StandardResolution.URL
 
-	return nil
+	switch {
+	case filter.Videos && video == "":
+		return
+	case filter.Videos && video != "":
+		url = video
+	case filter.Images && video != "":
+		return
+	default:
+		url = photo
+		url = strings.Replace(url, "s640x640", "s1080x1080", -1)
+	}
 
+	valid = true
+	return
 }
 
-func download(url string) error {
-	return nil
+func (post Post) download(url string, filter Filters, e chan error) {
+
+	log.Printf("attempting to save %s", post.Code)
+
+	main := filepath.Join(filter.Directory, post.User.Username)
+
+	if _, err := os.Stat(main); os.IsNotExist(err) {
+		if err := os.Mkdir(main, 0755); err != nil {
+			e <- err
+			return
+		}
+	}
+
+	_, name := filepath.Split(url)
+	path := filepath.Join(main, name)
+
+	if _, err := os.Stat(path); !os.IsNotExist(err) && !filter.Overwrite {
+		log.Printf("%s has already been downloaded, skipping...\n", name)
+		e <- nil
+		return
+	}
+
+	res, err := http.Get(url)
+	if err != nil {
+		e <- err
+		return
+	}
+
+	defer res.Body.Close()
+
+	file, err := os.Create(path)
+	if err != nil {
+		e <- err
+		return
+	}
+
+	defer file.Close()
+
+	if _, err := io.Copy(file, res.Body); err != nil {
+		e <- err
+		return
+	}
+
+	log.Printf("successfully downloaded %s\n", name)
+
+	e <- nil
 }
-
-// func (m media) save() error {
-
-// 	url := m.Video
-
-// 	if url == "" && vids {
-// 		return nil
-// 	}
-
-// 	if url == "" || pics {
-// 		url = m.Image
-// 		url = strings.Replace(url, "s640x640", "s1080x1080", -1)
-// 	}
-
-// 	d := filepath.Join(dir, user)
-
-// 	if _, err := os.Stat(d); os.IsNotExist(err) {
-// 		if err := os.Mkdir(d, 0755); err != nil {
-// 			log.Fatal(err)
-// 			return err
-// 		}
-// 	}
-
-// 	_, name := filepath.Split(url)
-// 	newPath := filepath.Join(d, name)
-
-// 	if _, err := os.Stat(newPath); !os.IsNotExist(err) && !skip {
-// 		log.Printf("%s has already been saved. skipping....\n", name)
-// 		return nil
-// 	}
-
-// 	res, err := http.Get(url)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	defer res.Body.Close()
-
-// 	file, err := os.Create(newPath)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return err
-// 	}
-
-// 	defer file.Close()
-
-// 	if _, err := io.Copy(file, res.Body); err != nil {
-// 		log.Fatal(err)
-// 		return err
-// 	}
-
-// 	log.Printf("successfully downloaded %s\n", name)
-// 	return nil
-
-// }

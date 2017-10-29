@@ -119,12 +119,14 @@ type Videos struct {
 
 // Filters is used in a channel to relay information if a post is or isn't wanted by the user.
 type Filters struct {
-	Before       time.Time
 	After        time.Time
+	Amount       int
+	Before       time.Time
 	CarouselOnly bool
+	Text         string
+	Images       bool
+	Overwrite    bool
 	SingleOnly   bool
 	Videos       bool
-	Images       bool
-	Amount       int
-	Has          string
+	Directory    string
 }

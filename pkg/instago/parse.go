@@ -72,8 +72,8 @@ func (post Post) Filter(filter Filters) (skip bool, stop bool) {
 	// -----------
 
 	// Make sure that the post has the desired text in the post caption.
-	if filter.Has != "" && !strings.Contains(post.Caption.Text, filter.Has) {
-		log.Printf("%s does not have the text %s in the post, skipping...", name, filter.Has)
+	if filter.Text != "" && !strings.Contains(post.Caption.Text, filter.Text) {
+		log.Printf("%s does not have the text %s in the post, skipping...", name, filter.Text)
 		skip = true
 		return
 	}
@@ -84,6 +84,7 @@ func (post Post) Filter(filter Filters) (skip bool, stop bool) {
 
 	if multi {
 
+		// For a carousel post.
 		for _, m := range post.CarouselMedia {
 			var video bool
 
@@ -107,6 +108,7 @@ func (post Post) Filter(filter Filters) (skip bool, stop bool) {
 
 	} else {
 
+		// For a single post.
 		var video bool
 
 		if post.Videos.StandardResolution.URL != "" {

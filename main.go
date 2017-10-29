@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -21,6 +20,7 @@ var (
 	carousels  bool
 	dir        string
 	has        string
+	overwrite  bool
 	pics       bool
 	singles    bool
 	user       string
@@ -32,17 +32,18 @@ var (
 func main() {
 
 	// Initialize the flags
-	flag.StringVar(&user, "user", "", "user to scrape (required)")
-	flag.StringVar(&dir, "dir", "~/", "where to save the scraped media files (required)")
-	flag.BoolVar(&pics, "pics", false, "only download images (optional)")
-	flag.BoolVar(&vids, "vids", false, "only download videos (optional)")
-	flag.StringVar(&before, "before", "", "get posts before date (optional)")
 	flag.StringVar(&after, "after", "", "get posts after a date (optional)")
-	flag.StringVar(&zone, "timezone", "UTC", "Timezone aka `America/Los_Angeles` formatted time-zone (optional)")
+	flag.StringVar(&before, "before", "", "get posts before date (optional)")
 	flag.BoolVar(&carousels, "carousel", false, "only download media from carousel posts (optional)")
-	flag.BoolVar(&singles, "single", false, "only download media from single posts (optional)")
-	// flag.IntVar(&max, "max", 0, "the maximum amount of valid/filtered posts to download (0 means all valid posts)")
+	flag.StringVar(&dir, "dir", "~/", "where to save the scraped media files (required)")
 	flag.StringVar(&has, "has", "", "download a post if it has certain text (optional)")
+	flag.BoolVar(&overwrite, "overwrite", false, "overwrite posts that have already been saved (optional)")
+	flag.BoolVar(&pics, "pics", false, "only download images (optional)")
+	flag.BoolVar(&singles, "single", false, "only download media from single posts (optional)")
+	flag.StringVar(&user, "user", "", "user to scrape (required)")
+	flag.BoolVar(&vids, "vids", false, "only download videos (optional)")
+	flag.StringVar(&zone, "timezone", "UTC", "Timezone aka `America/Los_Angeles` formatted time-zone (optional)")
+	// flag.IntVar(&max, "max", 0, "the maximum amount of valid/filtered posts to download (0 means all valid posts)")
 
 	flag.Parse()
 
@@ -97,7 +98,7 @@ func main() {
 	}
 
 	// Provide feedback that the search has started.
-	fmt.Printf("searching for %s\n", user)
+	log.Printf("searching for %s\n", user)
 
 	// Get the posts.
 	data := make(chan instago.Instagram)
@@ -114,7 +115,9 @@ func main() {
 		SingleOnly:   singles,
 		Videos:       vids,
 		Images:       pics,
-		Has:          has,
+		Text:         has,
+		Overwrite:    overwrite,
+		Directory:    dir,
 	}
 	x := 1
 
@@ -122,8 +125,13 @@ func main() {
 
 		select {
 		case e := <-err:
-			fmt.Println(e)
+			log.Println(e)
 		case d := <-data:
+
+			if len(d.Items) < 1 {
+				log.Printf("nothing found for %s", user)
+				break
+			}
 
 			for _, post := range d.Items {
 

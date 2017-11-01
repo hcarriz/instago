@@ -30,9 +30,7 @@ func (post Post) Filter(filter Filters) (stop, skip bool) {
 
 	t, err := strconv.ParseInt(post.CreatedTime, 10, 64)
 	if err != nil {
-		panic(err)
-		stop = true
-		return
+		log.Panic(err)
 	}
 
 	created := time.Unix(t, 0)

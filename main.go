@@ -32,17 +32,17 @@ var (
 func main() {
 
 	// Initialize the flags
-	flag.StringVar(&after, "after", "", "get posts after a date (optional)")
-	flag.StringVar(&before, "before", "", "get posts before date (optional)")
-	flag.BoolVar(&carousels, "carousel", false, "only download media from carousel posts (optional)")
-	flag.StringVar(&dir, "dir", "~/", "where to save the scraped media files (required)")
-	flag.StringVar(&has, "has", "", "download a post if it has certain text (optional)")
-	flag.BoolVar(&overwrite, "overwrite", false, "overwrite posts that have already been saved (optional)")
-	flag.BoolVar(&pics, "pics", false, "only download images (optional)")
-	flag.BoolVar(&singles, "single", false, "only download media from single posts (optional)")
-	flag.StringVar(&user, "user", "", "user to scrape (required)")
-	flag.BoolVar(&vids, "vids", false, "only download videos (optional)")
-	flag.StringVar(&zone, "timezone", "UTC", "Timezone aka `America/Los_Angeles` formatted time-zone (optional)")
+	flag.StringVar(&after, "after", "", "get posts after a certain date [optional]")
+	flag.StringVar(&before, "before", "", "get posts before a certain date [optional]")
+	flag.BoolVar(&carousels, "carousel", false, "only download media from carousel posts [optional]")
+	flag.StringVar(&dir, "dir", "~/", "the directory to save files (required)")
+	flag.StringVar(&has, "has", "", "only download a file if the post has this text [optional]")
+	flag.BoolVar(&overwrite, "overwrite", false, "overwrite media that has already been saved [optional]")
+	flag.BoolVar(&pics, "pics", false, "only download images [optional]")
+	flag.BoolVar(&singles, "single", false, "only download media from single posts [optional]")
+	flag.StringVar(&user, "user", "", "the user to scrape [required]")
+	flag.BoolVar(&vids, "vids", false, "only download videos [optional]")
+	flag.StringVar(&zone, "timezone", "UTC", "timezone aka `America/Los_Angeles` formatted time-zone [optional]")
 	// flag.IntVar(&max, "max", 0, "the maximum amount of valid/filtered posts to download (0 means all valid posts)")
 
 	flag.Parse()

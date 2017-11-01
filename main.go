@@ -72,7 +72,7 @@ func main() {
 
 	}
 
-	// Dates
+	// Parse the dates.
 	if b, err := dateparse.ParseLocal(before); err == nil {
 		beforeDate = b
 	}
@@ -81,7 +81,7 @@ func main() {
 		afterDate = a
 	}
 
-	// Allow for both commands to be used at the same time.
+	// Allow for -pics and -vids to be used at the same time.
 	if pics == true && vids == true {
 
 		pics = false
@@ -103,11 +103,9 @@ func main() {
 	// Get the posts.
 	data := make(chan instago.Instagram)
 	err := make(chan error)
-	stop := make(chan bool)
 	go instago.Retrieve(user, "", data, err)
 
 	// Filter the posts
-
 	filter := instago.Filters{
 		Before:       beforeDate,
 		After:        afterDate,
@@ -119,6 +117,7 @@ func main() {
 		Overwrite:    overwrite,
 		Directory:    dir,
 	}
+
 	x := 1
 
 	for i := 0; i < x; i++ {
@@ -126,6 +125,7 @@ func main() {
 		select {
 		case e := <-err:
 			log.Println(e)
+
 		case d := <-data:
 
 			if len(d.Items) < 1 {
@@ -135,13 +135,13 @@ func main() {
 
 			for _, post := range d.Items {
 
-				skip, stop := post.Filter(filter)
+				stop, skip := post.Filter(filter)
 
 				switch {
 				case stop:
-					break
-				case skip:
 					return
+				case skip:
+					break
 				default:
 					post.Save(filter)
 				}
@@ -152,12 +152,11 @@ func main() {
 				x++
 			}
 
-		case <-stop:
-			break
-
 		}
 
 	}
+
+	log.Println("operations completed")
 
 	return
 

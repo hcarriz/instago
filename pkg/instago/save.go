@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Save will
+// Save will get the filtered media and download the post media.
 func (post Post) Save(filter Filters) {
 
 	// Slice to hold valid url(s)
@@ -32,7 +32,7 @@ func (post Post) Save(filter Filters) {
 
 		// If the post has multiple media.
 		for _, p := range post.CarouselMedia {
-			if url, valid := p.url(filter); valid {
+			if url, valid := p.URL(filter); valid {
 				urls = append(urls, url)
 			}
 		}
@@ -40,7 +40,7 @@ func (post Post) Save(filter Filters) {
 	} else {
 
 		// If the post has only one media item.
-		if url, valid := post.url(filter); valid {
+		if url, valid := post.URL(filter); valid {
 			urls = append(urls, url)
 		}
 
@@ -50,7 +50,7 @@ func (post Post) Save(filter Filters) {
 	for x := range urls {
 
 		err := make(chan error)
-		go post.download(urls[x], filter, err)
+		go post.Download(urls[x], filter, err)
 		if e := <-err; e != nil {
 			log.Fatal(e)
 		}
@@ -59,8 +59,8 @@ func (post Post) Save(filter Filters) {
 
 }
 
-// Get the right url based on the filter.
-func (m Media) url(filter Filters) (url string, valid bool) {
+// URL will return valid url of a media file.
+func (m Media) URL(filter Filters) (url string, valid bool) {
 
 	video := m.Videos.StandardResolution.URL
 	photo := m.Images.StandardResolution.URL
@@ -81,9 +81,8 @@ func (m Media) url(filter Filters) (url string, valid bool) {
 	return
 }
 
-func (post Post) download(url string, filter Filters, e chan error) {
-
-	log.Printf("attempting to save %s", post.Code)
+// Download ---
+func (post Post) Download(url string, filter Filters, e chan error) {
 
 	main := filepath.Join(filter.Directory, post.User.Username)
 
@@ -124,7 +123,7 @@ func (post Post) download(url string, filter Filters, e chan error) {
 		return
 	}
 
-	log.Printf("successfully downloaded %s\n", name)
+	log.Printf("%s has been saved\n", post.Code)
 
 	e <- nil
 }
